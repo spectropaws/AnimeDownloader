@@ -7,6 +7,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import selenium.common.exceptions
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
 import tkinter
 from tkinter import ttk
 from tkinter import messagebox
@@ -20,7 +22,7 @@ browser_location = "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application
 
 headers = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0",
            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-           "Referer": "https://goload.pro/"}
+           "Referer": ""}
 
 
 def fetch_urls(num):
@@ -75,10 +77,16 @@ def fetch_urls(num):
             time.sleep(10)
         download_page.execute_script('arguments[0].click();',
                                      download_page.find_element(By.CLASS_NAME, "g-recaptcha"))
-        time.sleep(2)
-        download_link = download_page.find_element(By.XPATH, "// a[contains(text(),'Direct Download Link')]").\
-            get_attribute('href')
-        return download_link
+        try:
+            WebDriverWait(download_page, 20).until(
+                expected_conditions.presence_of_element_located((By.XPATH,
+                                                                 "// a[contains(text(),'Direct Download Link')]"))
+            )
+            download_link = download_page.find_element(By.XPATH, "// a[contains(text(),'Direct Download Link')]"). \
+                get_attribute('href')
+            return download_link
+        except selenium.common.exceptions.TimeoutException:
+            return ''
 
 
 def main_process():
@@ -95,15 +103,15 @@ def main_process():
                 t = threading.Thread(target=download_anime, args=(download_list[i], download_indexes[i]))
                 threads.append(t)
                 t.start()
+                time.sleep(0.1)
                 if threading.active_count() > Maximum_parallel_downloads + 1:
                     t.join()
         for thread in threads:
             thread.join()
-        window.quit()
-        root.quit()
+        window.event_generate("<<exit_event>>")
+        root.event_generate("<<exit_event>>")
 
     def download_anime(url, num):
-        headers['Referer'] = "https://sbplay2.xyz"
         video = requests.get(url, headers=headers, stream=True)
 
         frame = tkinter.Frame(window)
@@ -111,7 +119,7 @@ def main_process():
         tkinter.Label(frame, text=f"Episode {num}").grid(row=0, column=0)
         progress_bar = ttk.Progressbar(frame, orient=tkinter.HORIZONTAL, mode="determinate", length=350)
         progress_bar.grid(row=0, column=1)
-        progress_bar['maximum'] = int(float(video.headers['content-length']) / (1024 * 1024))
+        progress_bar['maximum'] = int(float(video.headers['Content-Length']) / (1024 * 1024))
         with open(f"{anime_folder_name}\\Episode {num}.mp4", "wb") as file:
             for chunk in video.iter_content(1024 * 1024 * 5):
                 if chunk:
@@ -121,6 +129,7 @@ def main_process():
         frame.destroy()
 
     anime_folder_name = folder_name.get()
+    server_id = server.get()
     window = tkinter.Tk()
     window.title('Progress')
     window.config(width=500)
@@ -134,8 +143,14 @@ def main_process():
     for index in range(int(episode_start.get()), int(episode_end.get()) + 1):
         download_list.append(fetch_urls(index))
 
+    if server_id == 1:
+        headers['Referer'] = "https://goload.pro/"
+    elif server_id == 2:
+        headers['Referer'] = "https://sbplay2.xyz"
+
     window.after(50, threading.Thread(target=start_download_threads).start)
     window.protocol("WM_DELETE_WINDOW", prevent_exit)
+    window.bind("<<exit_event>>", lambda e: window.quit())
     window.mainloop()
 
 
@@ -194,6 +209,7 @@ tkinter.Radiobutton(server_frame, variable=server, value=2, font=("Times", 12),
 tkinter.Button(button_frame, text="Download", font=("Century Gothic", 16), command=main_process,
                width=20, height=2).grid(row=0, column=0, padx=20, pady=(40, 0))
 
+root.bind("<<exit_event>>", lambda e: root.quit())
 root.mainloop()
 
 # Creator: Spectropaws.X
@@ -219,5 +235,4 @@ Working:
 Note: program uses mttkinter to update progress bars in threads
 """
 
-# TODO automatically close the program after the download is complete
 # TODO complete final update
