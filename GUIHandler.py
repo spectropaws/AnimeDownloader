@@ -4,6 +4,8 @@ import tkinter
 class MainWindow:
     def __init__(self):
         self.window = tkinter.Tk()
+        self.width = 700
+        self.height = 480
         self.base_url = tkinter.StringVar(self.window)
         self.folder_name = tkinter.StringVar(self.window)
         self.episode_start = tkinter.StringVar(self.window)
@@ -13,7 +15,7 @@ class MainWindow:
     # set up the main interface
     def setup_window(self, main_process: callable):
 
-        self.window.geometry("700x480")
+        self.window.geometry(f"{self.width}x{self.height}")
         self.window.resizable(False, False)
         self.window.title("Anime Downloader")
 
@@ -68,3 +70,6 @@ class MainWindow:
 
     def show(self):
         self.window.deiconify()
+
+    def set_pos(self, x, y):
+        self.window.geometry(f"+{int(x)}+{int(y)}")

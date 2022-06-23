@@ -1,6 +1,7 @@
 import DownloadHandler
 import GUIHandler
 import tkinter
+import threading
 import mttkinter
 
 
@@ -20,9 +21,11 @@ def main_process():
     window = tkinter.Tk()
     window.title('Progress')
     window.config(width=500)
-
+    window.geometry(f"+{int(screen_width/2 - 250)}+200")
+    window.withdraw()
     root.hide()
-    window.after(50, lambda: anime.start_download(window))
+
+    window.after(50, lambda: threading.Thread(target=anime.start_download, args=(window,)).start())
     window.protocol("WM_DELETE_WINDOW", prevent_exit)
     window.bind("<<exit_event>>", lambda e: quit_application())
     window.mainloop()
@@ -31,6 +34,14 @@ def main_process():
 if __name__ == "__main__":
     root = GUIHandler.MainWindow()
     root.setup_window(main_process)
+
+    screen_height = root.window.winfo_screenheight()
+    screen_width = root.window.winfo_screenwidth()
+
+    y_cord = screen_height/2 - root.height/2
+    x_cord = screen_width/2 - root.width/2
+
+    root.set_pos(x_cord, y_cord)
     root.window.mainloop()
 
 # Creator: Spectropaws.X
