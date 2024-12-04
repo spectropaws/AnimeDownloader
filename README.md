@@ -1,3 +1,7 @@
+# DEPRECATED
+* The website from which data was being scraped was shut down due to piracy. 
+* Selenium has been updated quite a while, current code doesn't work anymore.
+
 # AnimeDownloader
 Python app to mass download anime.
 
